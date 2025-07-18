@@ -1,0 +1,9 @@
+llama-index 
+pymilvus
+sentence-transformers
+transformers
+torch
+argparse
+pandas 
+geopandas
+osmnx

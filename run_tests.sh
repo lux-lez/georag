@@ -1,0 +1,1 @@
+python3 tests/georef.py | tee tests/logs/georef.log
