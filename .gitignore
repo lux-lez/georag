@@ -1,0 +1,13 @@
+# compiled python
+*.pyc
+__pycache__
+
+# virtual environment
+.venv
+
+# OSM cache and downloaded data 
+cache/*
+data/*
+
+# output from tests
+tests/logs/*

@@ -6,4 +6,7 @@ torch
 argparse
 pandas 
 geopandas
+geojson
 osmnx
+ipython
+matplotlib
