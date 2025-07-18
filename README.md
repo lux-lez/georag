@@ -9,12 +9,16 @@ This software was built using Python Here are the installation instructions spec
 
 ```bash
 python3 -m venv .venv
-source activate .venv
+source .venv/bin/activate
 python3 -m pip install -r requirements.txt 
 ```
 
 Caveat; If you don't have a GPU that supports CUDA then run 
-`pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu`
+```bash
+pip cache purge
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+```
+to clear the CUDA files and reinstall the CPU version of torch. Retry the installation steps from above afterwards.  
 
 ## How to use 
 
