@@ -37,3 +37,5 @@ Run tests with `sh run_tests.sh`.
 ## What still needs to be improved
 
 - TODO: installation, run and test instructions for Windows and macOS 
+
+- Recursive website scraping for better information on website 

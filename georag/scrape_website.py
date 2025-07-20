@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 
+
 MediaFormats = [
     '.txt', '.md',
     '.pdf', '.doc', '.docx', 
@@ -40,16 +41,23 @@ def scrape_website(url : str, include_text=True, include_media=True, internal_on
             'text': [list of text elements ... ],               
             'media': [list of media/document URLs ... ]             #(optional)
             'reference' [list of hyperlinks to other pages ... ]    #(optional)
-        }
+        } 
+        (or the string of a markdown version) 
     """
 
     # parse URL response 
-    resp = requests.get(url)
-    resp.raise_for_status()
+    try:
+        resp = requests.get(url, timeout=3)
+    except Exception as e:
+        return 
     soup = BeautifulSoup(resp.text, 'html.parser')
     base_url = "{0.scheme}://{0.netloc}".format(urlparse(url))
     print("Base URL ", base_url)
-    result = {"title" : soup.title.contents}
+    result = {}
+    if soup.title != None:
+        result["title"] = soup.title.contents
+    else:
+        result["title"] = url.replace("https:", "").replace("/", "").split(".")[0].capitalize()
 
     # List of text elements
     if include_text:
@@ -61,13 +69,14 @@ def scrape_website(url : str, include_text=True, include_media=True, internal_on
 
         # Try to find main content
         main_content = soup.find('main') or soup.find('article') or soup.find('section') or soup.body
+        if main_content:
 
-        # filter tags  
-        for tag in main_content.find_all(string=True):
-            content = tag.strip()
-            if len(content) > 9 and " " in content: 
-                if content and is_visible(tag, exclude_tags, exclude_keywords):
-                    texts.append(content)
+            # filter tags  
+            for tag in main_content.find_all(string=True):
+                content = tag.strip()
+                if len(content) > 9 and " " in content: 
+                    if content and is_visible(tag, exclude_tags, exclude_keywords):
+                        texts.append(content)
 
         result['text'] = texts
 
@@ -111,4 +120,3 @@ def scrape_website(url : str, include_text=True, include_media=True, internal_on
         ]))
     return result
 
-website = scrape_website("https://mahmouds.de/en/home-en/", markdown=True)

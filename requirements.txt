@@ -10,3 +10,4 @@ geojson
 osmnx
 ipython
 matplotlib
+search-web

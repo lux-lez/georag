@@ -4,12 +4,30 @@ import osmnx
 import shapely
 import geojson
 import geopandas
+from tqdm import tqdm
 
-#  data_path = os.path.join( os.path.abspath(os.curdir), "data")
+#DBG: data_path = os.path.join( os.path.abspath(os.curdir), "data")
 
+from .scrape_website import scrape_website
 
 def get_placename(place : str) -> str:
-    placename = place.replace(",", "").replace(" ", "_")
+    placename = str(place)
+
+    for _a in ["ä", "Ä", "ã"]: 
+        placename = place.replace(_a, "a")
+     #ToDo : same for õ -> o and similarly e, i and n, c, ae, ... 
+    
+    for _space in [" ", ".", ","]:
+        placename = placename.replace(_space, "_")
+    
+    while "__" in placename:
+        placename = placename.replace("__", "_")
+
+    placename = "".join(filter(
+        lambda x: x in "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-",
+        np.asarray([*placename])
+    ))
+
     return placename
 
 def geoquery_place(place : str):
@@ -26,7 +44,6 @@ def geoquery_place(place : str):
     
     # geo data files
     geometry_file = "geometry.geojson"
-    restaurant_file = "restaurants.geojson"
     
     # Query OpenStreetMap for the place and get its geographical data
     if geometry_file in contents:
@@ -49,9 +66,6 @@ def geoquery_place(place : str):
                 aabb = np.asarray([gdf[bbox] for bbox in bboxes])    
                 print("Bounding box ", aabb)
                 #TODO: save bounding box to file
-
-                #TODO: search on wikipedia and gather data on place
-                # save name, description and other stuff to file 
                 
                 # save polygon
                 polygon = gdf["geometry"]
@@ -63,12 +77,14 @@ def geoquery_place(place : str):
             print("Please check the place name and try again.")
             return 
 
-
+    # Restaurant features
+    restaurant_file = "restaurants.geojson"
     if restaurant_file in contents:
         # TODO load geopandas geodataframe from geojson file 
+        
         with open(os.path.join(georef_path, restaurant_file), "r") as f:
-            restaurants = geojson.load(f) # ...
-        restaurants = geopandas.GeoDataFrame(restaurants)
+            restaurants = geojson.load(f) # ...        
+        restaurants = geopandas.GeoDataFrame([restaurants[i]["properties"] for i in range( len(restaurants.features))])
     else:
         try:
             print(f"Querying OpenStreetMap for restaurants in {place} ... ", end="", flush=True)
@@ -88,5 +104,21 @@ def geoquery_place(place : str):
             print("Error ", e)
             return 
     
+    print("Columns ", restaurants.columns)
+    for name, website in tqdm( np.asarray(restaurants[["name", "website"]]), desc="Scraping websites." ):
+        if type(website) == str: 
+            dirname = get_placename(name) 
+            dirpath = os.path.join(georef_path, "webpages", dirname)
+            os.makedirs(dirpath, exist_ok=True)
+            
+            website_file = os.path.join(dirpath, "website.md")
+            if not os.path.isfile(website_file):
+                markdown = scrape_website(website)
+                if type(markdown) == str and len(markdown) > 5:
+                    with open(website_file, "w") as f:
+                        f.write(markdown)
+                else:
+                    #Search web for this
+                    pass
     return restaurants
 
