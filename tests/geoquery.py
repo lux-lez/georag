@@ -14,5 +14,5 @@ places = [
 ]
 for i,place in enumerate(places):
     print(f"[] Test {i+1}/{len(places)}")
-    geoquery_place(place)
+    GeoQuery("restaurant", place)
     print("\n")

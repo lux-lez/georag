@@ -5,6 +5,9 @@ __pycache__
 # virtual environment
 .venv
 
+# private files for storing API keys
+.api_keys/*
+
 # OSM cache and downloaded data 
 cache/*
 data/*

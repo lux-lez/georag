@@ -1,4 +1,5 @@
-#from sentence_transformers import sampler
+from sentence_transformers import SentenceTransformer
+
 
 user = "Find the best cafe to take my best friend in Karlsruhe, Germany next weekend."
 

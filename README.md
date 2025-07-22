@@ -39,3 +39,5 @@ Run tests with `sh run_tests.sh`.
 - TODO: installation, run and test instructions for Windows and macOS 
 
 - Recursive website scraping for better information on website 
+
+- Still very slow.
