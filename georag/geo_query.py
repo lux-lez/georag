@@ -1,15 +1,4 @@
-import os
-import yaml
-import time
-import numpy as np
-import pandas as pd
-import osmnx 
-import shapely
-import geojson
-import geopandas
-from tqdm import tqdm
-
-from .data_manager import alphanumeric, get_data_path #, get_feature_path
+from .utils import *
 from .scrape_website import visit_links
 
 def unique_exclude_empty(v, dtype="<U128"):

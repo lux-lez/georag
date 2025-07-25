@@ -1,10 +1,5 @@
-import os
-import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
-import yaml
 
-from .data_manager import get_data_path
+from .utils import *
 
 # Recognized document formats 
 MediaCategories = {
@@ -83,7 +78,7 @@ def scrape_website(url : str, include_text=True, include_media=True, internal_on
         if verbose: print("Could not open URL ", url)
         return 
     soup = BeautifulSoup(resp.text, 'html.parser')
-    base_url = "{0.scheme}://{0.netloc}".format(urlparse(url))
+    base_url = "{0.scheme}://{0.netloc}".format(urllib.parse.urlparse(url))
     if verbose: print("Visited ", base_url)
 
     # Initialize result dictionary with title 
@@ -121,8 +116,8 @@ def scrape_website(url : str, include_text=True, include_media=True, internal_on
         # Images
         if include_media:    
             for img in soup.find_all('img', src=True):
-                link = urljoin(base_url, img['src'])
-                if not internal_only or urlparse(link).netloc == urlparse(base_url).netloc:
+                link = urllib.parse.urljoin(base_url, img['src'])
+                if not internal_only or urllib.parse.urlparse(link).netloc == urllib.parse.urlparse(base_url).netloc:
                     media_links.add(link)        
     
     # List of references to other web pages 
@@ -131,8 +126,8 @@ def scrape_website(url : str, include_text=True, include_media=True, internal_on
     # Documents and other media
     for a in soup.find_all('a', href=True):
         href = a['href']
-        link = urljoin(base_url, href)
-        if not internal_only or urlparse(link).netloc == urlparse(base_url).netloc:
+        link = urllib.parse.urljoin(base_url, href)
+        if not internal_only or urllib.parse.urlparse(link).netloc == urllib.parse.urlparse(base_url).netloc:
             
             # check if file is media
             media_sublink = get_media_sublink(link) 
