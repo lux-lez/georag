@@ -1,4 +1,5 @@
 import os
+import yaml
 import time
 import numpy as np
 import pandas as pd
@@ -8,8 +9,8 @@ import geojson
 import geopandas
 from tqdm import tqdm
 
-from .data_manager import alphanumeric, get_data_path, get_feature_path
-
+from .data_manager import alphanumeric, get_data_path #, get_feature_path
+from .scrape_website import visit_links
 
 def unique_exclude_empty(v, dtype="<U128"):
     v = np.asarray(v, dtype=dtype)
@@ -195,11 +196,13 @@ class GeoQuery:
         print(self.place, ">", self.name, "@", self.path)
         os.makedirs( self.path, exist_ok=True )
 
+        
         # Initialize private variables
         self.geometry = self.get_geometry()
         self.features = self.get_features()
         self.amenities = self.get_amenities()
 
+        #self.visit_links()
 
     def get_geometry(self, geometry_file = "geometry.geojson") -> shapely.Polygon:
 
@@ -334,11 +337,10 @@ class GeoQuery:
         else:
             # Find unique feature names
             names = unique_exclude_empty(self.features.name, dtype="<U128")
-            df = pd.DataFrame({"name": names})
             
             # Prepare lists to collect column data
             address_list = []
-            website_list_final = []
+            website_list = []
 
             # Find addresses, website URLs
             addr_fields = [c.replace("addr:", "") for c in self.features.columns if c.startswith("addr:") ]
@@ -350,12 +352,24 @@ class GeoQuery:
             for i in iterations:
                 name = names[i]
                 mask = self.features.name == name
+                path_i = os.path.join(self.path, "amenities", alphanumeric(name))
+                os.makedirs(path_i, exist_ok=True)
 
                 # get list of website URLs
-                website_list = unique_exclude_empty(self.features["website"][ mask ],  dtype="<U128")
-                website_list2 = unique_exclude_empty(self.features["contact:website"][ mask ], dtype="<U128")
-                websites = "\n".join(np.concatenate([website_list, website_list2]))
-                website_list_final.append(websites)
+                websites_1 = unique_exclude_empty(self.features["website"][ mask ],  dtype="<U128")
+                websites_2 = unique_exclude_empty(self.features["contact:website"][ mask ], dtype="<U128")
+                websites = np.concatenate([websites_1, websites_2])
+                websites = [w for w in websites if w != "" and (w.startswith("http") or w.startswith("www"))] 
+                websites = "\n".join(websites)
+                
+                website_list.append(websites)
+                
+                website_file = "links.yaml"
+                website_path = os.path.join(path_i, website_file)
+                if not os.path.isfile(website_path):
+                    with open(website_path, "w") as f:
+                        text = yaml.dump({"unvisited" : websites.split("\n")})
+                        f.write(text)
 
                 # get list of addresses from data 
                 addr_df = self.features[ ["addr:" + field for field in addr_fields ] ][mask]            
@@ -365,7 +379,8 @@ class GeoQuery:
                     d = {k : d["addr:" + k] for k in addr_fields}
                     addr_entries.append(get_address(**d))
                 addr_entries = unique_exclude_empty(addr_entries)
-                address_list.append("\n".join(addr_entries))
+                address = "\n".join(addr_entries)
+                address_list.append(address)               
             
                 # More information as markdown text
                 selected = self.features[mask]
@@ -373,25 +388,27 @@ class GeoQuery:
                 for j in range(np.sum(mask)):
                     d = dict(selected.iloc[j])
                     description = description_from_dict(d, description=description)
+
                 # Join unique entries for each category, preserving order
                 desc_parts = []
                 for category in description:
                     if description[category]:
                         desc_parts.append("### " + category.capitalize())
-                        # Sort for deterministic output
                         desc_parts.extend(sorted(description[category]))
                 
                 # Write description to file
                 description_file = "description.md"
-                description_path = os.path.join(self.path, "amenities", alphanumeric(name), description_file)
-                os.makedirs(os.path.dirname(description_path), exist_ok=True)
-                description = "\n".join(desc_parts)
+                description_path = os.path.join(path_i, description_file)
+                description = "\n".join(["# " + name, address, "", *desc_parts])
                 with open(description_path, "w") as f:
                     f.write(description)
             
             # Assign lists to DataFrame columns at once
-            df["website"] = website_list_final
-            df["address"] = address_list
+            df = pd.DataFrame({
+                "name" : names,
+                "website": website_list,
+                "address" : address_list
+            })
 
             # Information on data gap
             if self.verbose:
@@ -404,95 +421,25 @@ class GeoQuery:
         self.amenities = df
         return df
 
-# def geoquery_place(place : str):
 
-#     # place path
-#     data_path = os.path.join( os.path.dirname(os.path.dirname(__file__)), "data")
-#     placename = get_placename(place)
-#     georef_path = os.path.join(data_path, placename)
+def visit_websites(place : str, n_links = 3, verbose=True):
 
-#     # check whether files exist
-#     os.makedirs(georef_path, exist_ok=True) 
-#     contents =  os.listdir(georef_path)
-    
-    
-#     # geo data files
-#     geometry_file = "geometry.geojson"
-    
-#     # Query OpenStreetMap for the place and get its geographical data
-#     if geometry_file in contents:
-#         with open(os.path.join(georef_path, geometry_file)) as f:
-#             polygon = shapely.geometry.shape(geojson.load(f))
-#     else:
-#         try:
-#             print(f"Querying OpenStreetMap for geometry of {place} ... \r", end="", flush=True)
-#             gdf = osmnx.geocode_to_gdf(place)
+    # geo query if files don't exists
+    path = get_data_path( alphanumeric(place) )
+    if not os.path.isdir(path):
+        q = GeoQuery(place)
 
-#             if gdf.shape == 0: polygon = None
-#             elif gdf.shape[0] >= 1:
-#                 print(f"Found geometry of {gdf["display_name"]} " + " " * 60)
-#                 if gdf.shape[0] > 1: 
-#                     print(f"Multiple geometries available, using first one." + " "*30) 
-#                 gdf = dict(gdf.iloc[0])
+    # iterate over amenities
+    amenities_path = os.path.join(path, "amenities")
+    amenities = [d for d in os.listdir(amenities_path) if os.path.isdir(os.path.join(amenities_path, d))]
+    iterations = range(len(amenities))
+    if verbose: iterations = tqdm(iterations, desc="Amenity")
+    for i in iterations:
+        amenity = amenities[i]
 
-#                 # Get axis aligned bounding box
-#                 bboxes = "bbox_" + np.asarray(["west", "east", "south", "north"]) 
-#                 aabb = np.asarray([gdf[bbox] for bbox in bboxes])    
-#                 print("Bounding box ", aabb)
-#                 #TODO: save bounding box to file
-                
-#                 # save polygon
-#                 polygon = gdf["geometry"]
-#                 with open(os.path.join(georef_path, geometry_file),"w") as f:
-#                     f.write(shapely.to_geojson(polygon))
-
-#         except Exception as e:
-#             print(f"\nError: {e}")
-#             print("Please check the place name and try again.")
-#             return 
-
-#     # Restaurant features
-#     restaurant_file = "restaurants.geojson"
-#     if restaurant_file in contents:
-#         # TODO load geopandas geodataframe from geojson file 
+        # Visit links 
+        links_path = os.path.join(amenities_path, amenity, "links.yaml")
+        for j in range(n_links):
+            visit_links(links_path, verbose=False)
         
-#         with open(os.path.join(georef_path, restaurant_file), "r") as f:
-#             restaurants = geojson.load(f) # ...        
-#         restaurants = geopandas.GeoDataFrame([restaurants[i]["properties"] for i in range( len(restaurants.features))])
-#     else:
-#         try:
-#             print(f"Querying OpenStreetMap for restaurants in {place} ... ", end="", flush=True)
-#             tags = {"amenity": "restaurant"}
-#             restaurants = osmnx.features_from_polygon(polygon, tags=tags)
-#             features = []
-#             for _, row in restaurants.iterrows():
-#                 props = {}
-#                 for key in restaurants.columns: 
-#                     if key in row and not (row[key] is np.nan or row[key] is None):
-#                         props[key] = row[key]
-#                     feature = geojson.Feature(geometry=row["geometry"], properties=props)
-#                     features.append(feature)
-#             with open(os.path.join(georef_path, restaurant_file), "w") as f:
-#                 geojson.dump(geojson.FeatureCollection(features), f)
-#         except Exception as e:
-#             print("Error ", e)
-#             return 
-    
-#     print("Columns ", restaurants.columns)
-#     for name, website in tqdm( np.asarray(restaurants[["name", "website"]]), desc="Scraping websites." ):
-#         if type(website) == str: 
-#             dirname = get_placename(name) 
-#             dirpath = os.path.join(georef_path, "webpages", dirname)
-#             os.makedirs(dirpath, exist_ok=True)
-            
-#             website_file = os.path.join(dirpath, "website.md")
-#             if not os.path.isfile(website_file):
-#                 markdown = scrape_website(website)
-#                 if type(markdown) == str and len(markdown) > 5:
-#                     with open(website_file, "w") as f:
-#                         f.write(markdown)
-#                 else:
-#                     #Search web for this
-#                     pass
-#     return restaurants
-
+    #visit_websites("Karlsruhe, Germany")

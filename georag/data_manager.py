@@ -44,7 +44,6 @@ def alphanumeric(name) -> str:
 
 def get_data_path(place : str):
     proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(proj_dir, "data", alphanumeric(place))
+    name = alphanumeric(place)
+    return os.path.join(proj_dir, "data", name)
 
-def get_feature_path(place : str, name : str):
-    return os.path.join( get_data_path(place), "features", alphanumeric(name) )

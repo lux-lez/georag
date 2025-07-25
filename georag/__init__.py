@@ -1,11 +1,32 @@
 
 import os
+import sys
 import argparse 
 
-from .geo_query import GeoQuery
-from .scrape_website import scrape_website
+from .geo_query import *
+from .scrape_website import *
 
-__all__ = ["GeoQuery", "scrape_website"]
+def parse_args():
+    a = argparse.ArgumentParser(
+        prog = "GeoRAG",
+        description="",
+        epilog="",
+    )
+    a.add_argument("-q", "--query")
+    return a.parse_args()
 
-#data_path = os.path.join( os.path.abspath(os.curdir), "data")
-#data_path = os.path.join( os.path.dirname(__file__), "data")
+def run():
+    print(sys.argv)
+    args = parse_args()
+    done_something = False
+    print("Args ", args)
+    if type(args.query) == str and len(args.query.strip()) > 3:
+        print("Geo query ", args.query)
+        q = GeoQuery("restaurant", args.query)
+        if q != None: done_something = True
+    
+    if not done_something:
+        print("Nothing to be done.")
+
+#TODO: only export relevant functions
+# __all__ = [ "GeoQuery" ... ]

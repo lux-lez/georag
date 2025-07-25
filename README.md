@@ -34,10 +34,18 @@ python3 georag.py
 
 Run tests with `sh run_tests.sh`.
 
+To check the disk usage of the data directory per place run
+```bash
+du -hd1 data
+```
+
+
 ## What still needs to be improved
 
 - TODO: installation, run and test instructions for Windows and macOS 
 
 - Recursive website scraping for better information on website 
 
-- Still very slow.
+- Still slow.
+
+- Redundant files, inefficient memory usage
