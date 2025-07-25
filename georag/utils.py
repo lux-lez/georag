@@ -1,24 +1,11 @@
-# All the dependencies
-import os
-import sys
-import argparse 
-import yaml
-import time
-import numpy as np
-import pandas as pd
-import osmnx 
-import shapely
-import geojson
-import geopandas
-from tqdm import tqdm
-import requests
-import urllib.parse
-from bs4 import BeautifulSoup
+# All functions with no dependencies, only Python base classes
 
-def alphanumeric(name) -> str:
+def alphanumeric(name : str, allow_sep : bool = True) -> str:
     '''
     Alphanumeric representation (ie. a-z or A-Z or 0-9 ) of a string.
     Useful for saving files as alphanumeric strings are guaranteed to be file system compatible across distributions.
+    If seperators are allowed this includes "-" (Minus) and "_" (Underscore). 
+    This function is useful for generating file names. 
     '''
 
     name = str(name) 
@@ -40,21 +27,17 @@ def alphanumeric(name) -> str:
     # Seperators    
     for sep in [" ", ".", ","]:
         name = name.replace(sep, "_")
+    for sep in ["−","➖"]:
+        name = name.replace(sep, "-")
     while "__" in name:
         name = name.replace("__", "_")
 
     # Filter alphanumeric digits 
-    name  = "".join(filter(
-        lambda x: x in "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-",
-        np.asarray([*name])
-    ))
+    a_z = "abcdefghijklmnopqrstuvwxyz"
+    A_Z = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    dig = "0123456789"
+    sep = "_-"          # allow two seperators
+    valid_letter = lambda x: x in (a_z + A_Z + dig + sep)
+    name  = "".join(filter(valid_letter, list(name)))
 
     return name
-
-# Data paths
-
-def get_data_path(place : str):
-    proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    name = alphanumeric(place)
-    return os.path.join(proj_dir, "data", name)
-

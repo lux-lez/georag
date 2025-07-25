@@ -8,9 +8,10 @@ __pycache__
 # private files for storing API keys
 .api_keys/*
 
-# OSM cache and downloaded data 
+# cache, downloaded or local data folders
 cache/*
 data/*
+storage/*
 
 # output from tests
 tests/logs/*

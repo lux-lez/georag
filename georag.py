@@ -1,3 +1,4 @@
 #! /usr/bin/env python3
-from georag import run
-if __name__ == "__main__": run()
+from georag import georag_cli
+if __name__ == "__main__": 
+    georag_cli()

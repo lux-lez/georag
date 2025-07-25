@@ -11,3 +11,6 @@ osmnx
 ipython
 matplotlib
 search-web
+rich
+rich-menu
+

@@ -1,23 +1,12 @@
+import os
+import yaml
+import requests
+import urllib.parse
+from bs4 import BeautifulSoup
 
-from .utils import *
+from .utils import alphanumeric
 
-# Recognized document formats 
-MediaCategories = {
-    "text" :        ['.txt', '.md'],                           
-    "document" :    ['.pdf', '.doc', '.docx', ".odt"],   
-    "video" :       [".mov", ".avi", ".mp4"],         
-    "audio" :       [".mp3", ".wav", ".flac"],
-    "archive" :     ['.zip', '.rar', '.7z'],                       
-    "image" :       ['.png', '.jpg', '.jpeg', '.svg']                
-}
-
-# Settings for handling file categories
-MediaRules = {
-    "text" :        "save",
-    "document" :    "save",
-    "image" :       "ignore",
-    "archive" :     "ignore",
-}
+from .constants.files import MediaCategories, MediaRules
 
 # Exclude unwanted tags
 def is_visible(tag, exclude_tags=[], exclude_keywords=[]):
@@ -177,7 +166,7 @@ def download_file(url: str, save_path: str):
             if chunk:
                 f.write(chunk)
 
-def visit_links(links_path : str, out_path : str = "", verbose=True):
+def visit_links(links_path: str, out_path: str = "", verbose=True):
     '''
     Args:
         links_path (str): path to unified resource links file (.yaml file)
@@ -189,65 +178,70 @@ def visit_links(links_path : str, out_path : str = "", verbose=True):
         out_path = str(os.path.dirname(links_path))
 
     ext = os.path.splitext(links_path)[-1]
-    
+
     # load yaml file
     if ext == ".yaml":
         try:
             with open(links_path, "r") as f:
                 links_yaml = yaml.safe_load(f.read())
-            
-            if "unvisited" not in links_yaml:
+
+            if "unvisited" not in links_yaml or not links_yaml["unvisited"]:
                 unvisited_links = []
             else:
                 unvisited_links = links_yaml["unvisited"]
-                if verbose:
-                    print(f"Visiting {len(unvisited_links)} links.")
-                
-                new_media = []
-                new_links = []
-                for link in unvisited_links:
-                    if not (link.startswith("http") or link.startswith("www")): continue 
 
+            if verbose:
+                print(f"Visiting {1 if unvisited_links else 0} link(s).")
+
+            new_media = []
+            new_links = []
+
+            # Only visit the first unvisited link
+            if unvisited_links:
+                link = unvisited_links[0]
+                if link.startswith("http") or link.startswith("www"):
                     # Visit website and get contents
                     result = scrape_website(link, verbose=verbose)
-                    if result == None: continue
+                    if result is not None:
+                        # Write website text to markdown file
+                        n_websites = len([
+                            f for f in os.listdir(out_path)
+                            if f.startswith("website_") and f.endswith(".md")
+                        ])
+                        result_path = os.path.join(out_path, "website_" + str(n_websites + 1) + ".md")
+                        markdown = "# " + " ".join(result["title"]) + "\n\n" + "\n".join(result["text"])
+                        with open(result_path, "w") as f:
+                            f.write(markdown)
 
-                    # Write website text to markdown file 
-                    n_websites = len([
-                        f for f in os.listdir(out_path) 
-                        if f.startswith("website_") and f.endswith(".md") 
-                    ])
-                    result_path = os.path.join(out_path, "website_" + str(n_websites + 1) + ".md")
-                    markdown = "# " + " ".join(result["title"]) + "\n\n" + "\n".join(result["text"])
-                    with open(result_path, "w") as f:
-                        f.write(markdown)
-                    
-                    # Save URLs for hyperlinks and media files
-                    new_links.extend(result["links"])
-                    new_media.extend(result["media"])
-            
-                # Download media files if they don't exist yet
-                # (Caveat will not overwrite if a falsely named instance exists)
-                for media in new_media:
-                    media_path = os.path.join(out_path, os.path.split(media)[-1])
-                    if not os.path.isfile(media_path):
-                        download_file(media, media_path)
-            
+                        # Save URLs for hyperlinks and media files
+                        new_links.extend(result["links"])
+                        new_media.extend(result["media"])
+
+                        # Download media files if they don't exist yet
+                        for media in new_media:
+                            media_path = os.path.join(out_path, os.path.split(media)[-1])
+                            if not os.path.isfile(media_path):
+                                download_file(media, media_path)
+
             # Get already visited links
-            if "visited" not in links_yaml:
-                visited_links = []
-            else:
-                visited_links = links_yaml["visited"]
+            visited_links = links_yaml.get("visited", [])
 
-            # set explored links to visited, set new links to unvisted 
-            visited_links.extend(unvisited_links)
-            visited_links = list(set(visited_links)) # remove duplicates
-            unvisited_links = [
+            # Move the visited link from unvisited to visited
+            if unvisited_links:
+                visited_links.append(unvisited_links[0])
+                visited_links = list(set(visited_links))  # remove duplicates
+
+            # Set new links to unvisited, excluding already visited
+            updated_unvisited_links = [
                 link for link in new_links
-                if link not in visited_links 
+                if link not in visited_links
             ]
+            # Add the remaining unvisited links (except the first, which was just visited)
+            if len(unvisited_links) > 1:
+                updated_unvisited_links.extend(unvisited_links[1:])
+
             with open(links_path, "w") as f:
-                f.write( yaml.dump({"unvisited" : unvisited_links, "visited" : visited_links }) )
+                f.write(yaml.dump({"unvisited": updated_unvisited_links, "visited": visited_links}))
 
         except Exception as e:
             print("YAML parsing error in ", links_path)
@@ -255,5 +249,5 @@ def visit_links(links_path : str, out_path : str = "", verbose=True):
             return None
 
     else:
-        raise ValueError("Links must be .yaml file. Received {ext} instead.")
+        raise ValueError(f"Links must be .yaml file. Received {ext} instead.")
 

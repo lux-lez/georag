@@ -1,5 +1,6 @@
 # GeoRAG  
 
+[Read the official documentation.](./docs/Documentation.md). Here is just the short version:
 
 ## Installation 
 
@@ -20,19 +21,20 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 ```
 to clear the CUDA files and reinstall the CPU version of torch. Retry the installation steps from above afterwards.  
 
-## How to use 
+## Usage 
 
-Just the short version here. 
-[For more information read the official documentation.](./docs/Solution.md).
 
 <b> Linux </b>
 
+For the CLI interface run 
 ```bash
 source .venv/bin/activate
 python3 georag.py
 ```
 
-Run tests with `sh run_tests.sh`.
+Run an example with `sh run_example.sh`.
+
+Run the tests with `sh run_tests.sh`.
 
 To check the disk usage of the data directory per place run
 ```bash
@@ -40,12 +42,11 @@ du -hd1 data
 ```
 
 
+
 ## What still needs to be improved
 
-- TODO: installation, run and test instructions for Windows and macOS 
+- Instructions for Windows and macOS: installation, run and test  
 
-- Recursive website scraping for better information on website 
+- Rather slow, currently hardly any async or parallelization
 
-- Still slow.
-
-- Redundant files, inefficient memory usage
+- Redundancy in file system: currently optimized for rerunning smaller parts of the application, tradeoff is that overall memory is inefficiently used
