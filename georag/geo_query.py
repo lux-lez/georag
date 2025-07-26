@@ -8,14 +8,8 @@ import yaml
 from tqdm import tqdm
 
 from .utils import alphanumeric
-from .scrape_website import visit_links
+from .file_system import get_data_path
 from .constants.tags import TagsPerCategory
-
-# Data paths
-def get_data_path(place : str):
-    proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    name = alphanumeric(place)
-    return os.path.join(proj_dir, "data", name)
 
 
 def unique_exclude_empty(v, dtype="<U128"):
@@ -72,7 +66,10 @@ def description_from_dict(d: dict, description=None, bullet:str = "-") -> dict:
 def get_address(**kwargs) -> str:
     """
     Build a human-readable address string from available keyword arguments.
-    Handles missing fields gracefully.
+    Handles combination of missing fields appropriately.
+
+    Args: (optional)
+        street, housenumber, city, postcode, countryplace, floor, housename,  ...
     """
     kwargs = {k : str(kwargs[k]) for k in kwargs if str(kwargs[k]) != "nan"}
 
@@ -125,7 +122,7 @@ class GeoQuery:
     Downloads GeoJSON files if you specify what and where you are searching.
 
     Arguments:
-        - amenity : str                what are you searching for? 
+        - amenity : str                what are you searching for? (currently only tested with "restaurant")
         - place   : str                where should it be?
         - name    : str (optional)     data folder name (will use alphanumeric version of place descriptor by default)
         - verbose : bool (optional)    adjust output  
@@ -151,10 +148,9 @@ class GeoQuery:
 
         # Initialize directory
         self.path = get_data_path(place)
-        print(self.place, ">", self.name, "@", self.path)
+        if verbose: print("Downloading ", self.place, " to ", self.path)
         os.makedirs( self.path, exist_ok=True )
 
-        
         # Initialize private variables
         self.geometry = self.get_geometry()
         self.features = self.get_features()
@@ -294,7 +290,7 @@ class GeoQuery:
 
         else:
             # Find unique feature names
-            if self.features == None: 
+            if type(self.features) == type(None): 
                 print("No features found.") ; return None
             names = unique_exclude_empty(self.features.name, dtype="<U128")
             
@@ -380,23 +376,3 @@ class GeoQuery:
             
         self.amenities = df
         return df
-
-#TODO: move this function somwhere else
-def visit_websites(place : str, verbose=True):
-
-    # geo query if files don't exists
-    path = get_data_path( alphanumeric(place) )
-    if not os.path.isdir(path):
-        q = GeoQuery(place)
-
-    # iterate over amenities
-    amenities_path = os.path.join(path, "amenities")
-    amenities = [d for d in os.listdir(amenities_path) if os.path.isdir(os.path.join(amenities_path, d))]
-    iterations = range(len(amenities))
-    if verbose: iterations = tqdm(iterations, desc="Amenity")
-    for i in iterations:
-        amenity = amenities[i]
-
-        # Visit links 
-        links_path = os.path.join(amenities_path, amenity, "links.yaml")
-        visit_links(links_path, verbose=False)

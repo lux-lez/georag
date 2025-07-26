@@ -3,9 +3,10 @@ import yaml
 import requests
 import urllib.parse
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 from .utils import alphanumeric
-
+from .file_system import get_data_path
 from .constants.files import MediaCategories, MediaRules
 
 # Exclude unwanted tags
@@ -38,6 +39,24 @@ def get_media_category(link:str) -> str:
         if ext in MediaCategories[c]: 
             return c
     return ""
+
+
+
+def download_file(url: str, save_path: str):
+    """
+    Download a file from a URL and save it to the specified path.
+
+    Args:
+        url (str): The URL of the file to download.
+        save_path (str): The local file path to save the downloaded file.
+    """
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    with open(save_path, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                f.write(chunk)
+
 
 def scrape_website(url : str, include_text=True, include_media=True, internal_only=True, verbose=True):
     """
@@ -151,23 +170,10 @@ def scrape_website(url : str, include_text=True, include_media=True, internal_on
     return result 
 
 
-def download_file(url: str, save_path: str):
-    """
-    Download a file from a URL and save it to the specified path.
-
-    Args:
-        url (str): The URL of the file to download.
-        save_path (str): The local file path to save the downloaded file.
-    """
-    response = requests.get(url, stream=True)
-    response.raise_for_status()
-    with open(save_path, 'wb') as f:
-        for chunk in response.iter_content(chunk_size=8192):
-            if chunk:
-                f.write(chunk)
-
-def visit_links(links_path: str, out_path: str = "", verbose=True):
+def visit_link(links_path: str, out_path: str = "", verbose=True):
     '''
+    Visit one unvisited link from a scraped website. 
+
     Args:
         links_path (str): path to unified resource links file (.yaml file)
         out_path   (str): path to output (optional)
@@ -251,3 +257,28 @@ def visit_links(links_path: str, out_path: str = "", verbose=True):
     else:
         raise ValueError(f"Links must be .yaml file. Received {ext} instead.")
 
+
+def visit_websites(place : str, verbose=True):
+    '''
+    Loop over all amenities and scrape the websites.
+
+    Args:
+        place : str - which geographical place (either name or alphanumeric string) 
+    '''
+
+    # geo query if files don't exists
+    path = get_data_path( alphanumeric(place) )
+    if not os.path.isdir(path):
+        q = GeoQuery(place)
+
+    # iterate over amenities
+    amenities_path = os.path.join(path, "amenities")
+    amenities = [d for d in os.listdir(amenities_path) if os.path.isdir(os.path.join(amenities_path, d))]
+    iterations = range(len(amenities))
+    if verbose: iterations = tqdm(iterations, desc="Scraping")
+    for i in iterations:
+        amenity = amenities[i]
+
+        # Visit links 
+        links_path = os.path.join(amenities_path, amenity, "links.yaml")
+        visit_link(links_path, verbose=False)

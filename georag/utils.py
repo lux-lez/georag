@@ -41,3 +41,23 @@ def alphanumeric(name : str, allow_sep : bool = True) -> str:
     name  = "".join(filter(valid_letter, list(name)))
 
     return name
+
+
+def human_readable_number(num):
+    """
+    Converts a number to a string with a suffix for thousands (k), millions (M), billions (B), etc.
+    Examples:
+        10000      -> '10k'
+        3324450    -> '3.3M'
+        1000000000 -> '1B'
+    """
+    if num < 1000:
+        return str(num)
+    elif num < 1_000_000:
+        return f"{num/1000:.1f}k".rstrip('0').rstrip('.')
+    elif num < 1_000_000_000:
+        return f"{num/1_000_000:.1f}M".rstrip('0').rstrip('.')
+    elif num < 1_000_000_000_000:
+        return f"{num/1_000_000_000:.1f}B".rstrip('0').rstrip('.')
+    else:
+        return f"{num/1_000_000_000_000:.1f}T".rstrip('0').rstrip('.')
