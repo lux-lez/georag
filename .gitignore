@@ -15,3 +15,6 @@ storage/*
 
 # output from tests
 tests/logs/*
+
+# temporary files
+old*

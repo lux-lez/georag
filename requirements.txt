@@ -5,6 +5,7 @@ transformers
 torch
 argparse
 pandas 
+geopy
 geopandas
 geojson
 osmnx

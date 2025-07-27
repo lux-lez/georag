@@ -1,17 +1,9 @@
 
-__all__ = [
-    "georag_cli"
-]
+print(f"Running georag/__init__.py as {__name__}\r", end="", flush=True)
 
+from .geo import geolocate, geoquery
+from .search import semantic_search as search
 
-from .cli_interface import georag_cli
-
-# try:
-
-#     #from .geo_query import GeoQuery
-#     from .cli_interface import georag_cli
-#     from .geo_query import GeoQuery
-
-# except ModuleNotFoundError as e:
-#     print("Modules were not found. Have you activated the virtual environment?")
-#     print(f"({e})")
+from .cli import interface as cli_interface
+#from .vectordb import build_vectordb
+if __name__ == "__main__": print(f"Finished georag/__init__.py as {__name__}")

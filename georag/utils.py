@@ -43,9 +43,10 @@ def alphanumeric(name : str, allow_sep : bool = True) -> str:
     return name
 
 
-def human_readable_number(num):
+def strf_big(num):
     """
-    Converts a number to a string with a suffix for thousands (k), millions (M), billions (B), etc.
+    String formating for big numbers 
+    Converts a number to human readable string with a suffix for thousands (k), millions (M), billions (B), trillions (T)
     Examples:
         10000      -> '10k'
         3324450    -> '3.3M'
@@ -61,3 +62,48 @@ def human_readable_number(num):
         return f"{num/1_000_000_000:.1f}B".rstrip('0').rstrip('.')
     else:
         return f"{num/1_000_000_000_000:.1f}T".rstrip('0').rstrip('.')
+
+def strf_time(time_ns : float):
+    '''
+    String formatting for time.
+    Converts nanoseconds to a human-readable string with appropriate units:
+    - ns (nanoseconds)
+    - µs (microseconds)
+    - ms (milliseconds)
+    - s (seconds)
+    - min (minutes)
+    - h (hours)
+    - d (days)
+    - m (months, approx 30.44 days)
+    - y (years, approx 365.25 days)
+
+    Examples:
+        500         -> '500ns'
+        1500        -> '1.5µs'
+        2_000_000   -> '2ms'
+        65_000_000_000 -> '1.1min'
+        3_600_000_000_000 -> '1h'
+        31_536_000_000_000_000 -> '1y'
+    '''
+    units = [
+        ('ns', 1),
+        ('µs', 1_000),
+        ('ms', 1_000_000),
+        ('s', 1_000_000_000),
+        ('min', 60_000_000_000),
+        ('h', 3_600_000_000_000),
+        ('d', 86_400_000_000_000),
+        ('m', 2_629_746_000_000_000),  # 30.44 days
+        ('y', 31_557_600_000_000_000), # 365.25 days
+    ]
+
+    for i in range(len(units)-1, -1, -1):
+        unit, factor = units[i]
+        if time_ns >= factor:
+            value = time_ns / factor
+            if value < 10:
+                value_str = f"{value:.1f}".rstrip('0').rstrip('.')
+            else:
+                value_str = f"{int(value)}"
+            return f"{value_str}{unit}"
+    return f"{int(time_ns)}ns"
