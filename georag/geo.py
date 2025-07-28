@@ -32,7 +32,6 @@ def geolocate(place_name, user_agent="geo_checker"):
                 if f.split("_")[0] == place:
                     vecdb_path = os.path.join(data_path, f, "vectors.npz")
                     if os.path.isfile(vecdb_path):
-                        print("Found place in files @", f)
                         nt = namedtuple('LocalLocator', ['address'])
                         return nt(f.replace("_", ", "))
     except Exception as e: pass
@@ -47,7 +46,7 @@ def geolocate(place_name, user_agent="geo_checker"):
         print(e)
         return None
 
-def geoquery(place : str, verbose=True) -> pd.DataFrame:
+def geoquery(place : str, verbose=True) -> tuple[pd.DataFrame, list[str]]:
     """
     Search for amenities in a given place using OSMnx and return a DataFrame with their features.
     Args:
@@ -55,6 +54,7 @@ def geoquery(place : str, verbose=True) -> pd.DataFrame:
         verbose (bool): Whether to print progress messages.
         Returns:
             pd.DataFrame: A DataFrame containing the features of the amenities found in the place.
+            
     """
     # Download features of all amenities 
     amenities = list( map(str, np.concatenate(list(AmenityByCategory.values()) ) ))
@@ -81,7 +81,13 @@ def geoquery(place : str, verbose=True) -> pd.DataFrame:
     for k in ["geometry", "amenity", "type", "ele"]:
         if k in features.columns:
             features = features.drop(columns=k)
-        
+    
+    # Save list of columns
+    columns = list(features.columns)
+    path = get_data_path(place)
+    with open(os.path.join(path, "geo_columns.csv"), "w") as f:
+        f.write(", ".join(columns))
+
     # Markdown version of columns, very fast to generate
     texts = []
     for i in range(n):

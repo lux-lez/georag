@@ -8,8 +8,9 @@ from .utils import alphanumeric
 from .file_system import get_data_path
 from .timing import timer_start, timer_end
 from .constants.amenity import AmenityByCategory
-from .semantic import get_embedding_model,get_reranker_model, cross_similarity
+from .semantic import get_embedding_model,get_reranker_model, cross_similarity, semantic_line_filter
 from .vectordb import milvus_client
+from .llm import start_llm_client, rephrase_question
 
 def infer_amenities(query: str, threshold=-0.9, reranker=None, verbose=True) -> list[str]:
     """
@@ -74,57 +75,18 @@ def semantic_search(place : str, query : str, limit=30, client = None, verbose=T
     if client == None: _client = milvus_client(place)
     else: _client = client
     results = ann_search(place, query, limit, _client)
+    if client == None: _client.close()
     
     reranker = get_reranker_model()
-    texts = reranker.rank(query, results["text"], top_k=10, return_documents=True, show_progress_bar=verbose)
+    if verbose: t = timer_start("reranking")
+    texts = reranker.rank(query, results["text"], top_k=10, return_documents=True)
     df = pd.DataFrame(texts)
+    if verbose: timer_end(t)
+
+    #for i in range(df.shape[0]):
+    #    df[i, "text"] = semantic_line_filter(query, df["text"][i], reranker=reranker, verbose=verbose)
+    
     results = results.iloc[df["corpus_id"]]
     results["similarity"] = 1.0 / (1.0 + np.exp(-df["score"])) * 2.0 - 1.0
-    if client == None: _client.close()
+    
     return results
-
-def neural_answer(place : str, query : str, results : pd.DataFrame) -> str:
-
-    return "No LLM found to digest context [" + ", ".join(results.name) + "]"
-
-    # TODO : add Mistral AI model from llm.py
-
-
-def save_query(place, query, answer=None, results=None, verbose=True, **kwargs):
-
-    if results == None:
-        results = semantic_search(place, query)
-    
-    if answer == None:
-        answer = neural_answer(place, query, results)
-
-    # get time stamp
-    now = datetime.now()
-    stamp = time.strftime(now) 
-    stamp = alphanumeric(str(stamp)) ## TODO : fix me
-    #ascii readable time stamp representation!
-
-    # Output file name
-    filename = "query_" + str(stamp) + ".md"
-    proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    query_path = os.path.join(proj_dir, "queries", filename)
-    os.makedirs(os.dirname(query_path), exist_ok=False)
-
-    # Write 
-    msg = "# GeoRAG Log"
-    msg += f"Time: {time}\n"
-    msg += f"Place: {place}\n"        
-    msg += f"Query: {query}\n"
-    if answer != None:
-        msg += f"Answer: {answer}\n"
-    if results != None:
-        suggestions = ", ".join(answer.name)
-        msg += "Results: {suggestions}\n"
-        msg += str(answer)
-
-    if verbose: print(msg)
-
-    with open(query_path, "w") as f:
-        f.write(msg)
-
-    

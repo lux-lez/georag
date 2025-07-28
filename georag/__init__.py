@@ -1,7 +1,6 @@
 try: 
     # Only these components are exported:
     from .cli import interface  
-    from .search import save_query as search  
         # will use the semantic search and llm if no arguments are provided
 
 except ModuleNotFoundError as e:

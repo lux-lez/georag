@@ -5,11 +5,11 @@ from argparse import ArgumentParser
 import rich, rich.prompt, rich.console, rich_menu
 
 from .geo import geolocate
-from .search import semantic_search, save_query
+from .search import semantic_search
 from .timing import timer_start, timer_end
 from .vectordb import build_database
 #from .search import infer_amenities
-
+from .pipeline import pipeline
 
 def yes_or_no(prompt : str) -> bool:
     """Ask yes or no question (boolen, default answer yes)"""
@@ -65,20 +65,18 @@ def check_place(place : str, console=None):
     return place
 
 
-def pipeline(place, query, console=None, verbose=True, client=None):
+def run_all(place, query, console=None, client=None, verbose=True ):
     """Run everything"""
+    print("Running pipeline")
     if client == None: _client = build_database(place)
     else: _client = client  
 
     if _client != None: 
-        
-        t = timer_start("semantic search")
-        results = semantic_search(place, query, client=_client)
+        t = timer_start("GeoRAG pipeline")
+        pipeline(place, query, client=_client, verbose=verbose)
         timer_end(t)
 
-        save_query(place, query, verbose=verbose)
-
-    if client == None: _client.close()
+    if client == None and _client != None: _client.close()
 
 def parametric_interface(console=None):
     if console == None: console = rich.console.Console()
@@ -88,21 +86,27 @@ def parametric_interface(console=None):
     print("Parametric interface")
     place = check_place(place)
     if place != None:
-        pipeline(place, query)
+        run_all(place, query)
 
 def interactive_interface(console=None):
     if console == None: console = rich.console.Console()
     console.print("Interactive interface")
 
+    console.rule("Enter Place")
     place = None
     while place == None:
         p = console.input("Place ")
         p = check_place(p, console)
         if p != None: place = p 
-    query = console.input("Query ")
-
-    pipeline(place, query)
-
+    
+    console.rule("Ask Question")
+    finished = False 
+    while not finished:
+        client = build_database(place)
+        query = console.input("Query ")
+        run_all(place, query, client=client)
+        finished = not yes_or_no("Continue?")
+    client.close()
 
 def interface(console=None):
     if console == None: console = rich.console.Console()

@@ -1,4 +1,4 @@
-# All functions with no dependencies, only Python base classes
+from .constants.ascii import ASCIIreplace
 
 def alphanumeric(name : str, allow_sep : bool = True) -> str:
     '''
@@ -7,21 +7,9 @@ def alphanumeric(name : str, allow_sep : bool = True) -> str:
     If seperators are allowed this includes "-" (Minus) and "_" (Underscore). 
     This function is useful for generating file names. 
     '''
-
+    # ASCII version of name
     name = str(name) 
-
-    # Replace accented and special characters with ASCII equivalents
-    replacements = {
-        "ä": "a", "Ä": "a", "ã": "a", "å": "a", "á": "a", "à": "a", "â": "a", "æ": "ae",
-        "õ": "o", "ö": "o", "ó": "o", "ò": "o", "ô": "o", "ø": "o", "Ô": "I",
-        "é": "e", "è": "e", "ê": "e", "ë": "e", "É": "E", "È": "E", "Ê": "E", "Ë": "E",
-        "í": "i", "ì": "i", "î": "i", "ï": "i", "Í": "i", "Ì": "I", "Î": "I", "Ï": "I",
-        "ñ": "n", "Ñ": "n",
-        "ç": "c", "Ç": "c",
-        "ß": "ss",
-        "ú": "u", "ù": "u", "û": "u", "ü": "u", "Ú": "u", "Ù": "U", "Û": "U", "Ü": "U"
-    }
-    for orig, repl in replacements.items():
+    for orig, repl in ASCIIreplace.items():
         name = name.replace(orig, repl)
 
     # Seperators    
@@ -66,7 +54,7 @@ def strf_big(num):
 def strf_time(time_ns : float):
     '''
     String formatting for time.
-    Converts nanoseconds to a human-readable string with appropriate units:
+    Converts nanoseconds counter to a human-readable string with appropriate units:
     - ns (nanoseconds)
     - µs (microseconds)
     - ms (milliseconds)

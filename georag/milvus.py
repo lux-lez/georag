@@ -2,6 +2,7 @@ import os
 import pymilvus
 from tqdm import tqdm
 import pandas as pd
+
 from .geo import geolocate
 from .file_system import get_data_path
 from .timing import timer_start, timer_end
@@ -25,23 +26,16 @@ def milvus_client(place : str, verbose=True) -> pymilvus.MilvusClient:
     db_path = os.path.join(get_data_path(place), "vector.db")
     if not os.path.isfile(db_path):
         if verbose: print(f"Vector database for {place} does not exist at {db_path}.")
-        return None
     
     try:
         print("\nStarting Milvus client for", place)
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
         client = pymilvus.MilvusClient(db_path)
         print("Got milvus client ", client)
         return client
-    except pymilvus.MilvusError as e:
-        print("Could not connect to Milvus server.")
-        print(e)
     except Exception as e:
         print("Error in database ")
         print(e)
-    if client == None: 
-        print("Milvus client could not connect.")
-    else:
-        client.close() # Close connection if it still exists to avoid memory leak.
 
 def milvus_init(client : pymilvus.MilvusClient, place : str, n_latent : int, overwrite = False, verbose=True):
     """

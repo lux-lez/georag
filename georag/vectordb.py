@@ -13,7 +13,6 @@ from .timing import timer_start, timer_end
 from .milvus import milvus_client, milvus_init, milvus_populate
 
 
-
 def load_vectors(place : str, verbose = True) -> Union[pd.DataFrame, None]:
     ''' Load pre-computed vectors from a .npz file.
     Args:

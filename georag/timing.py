@@ -1,4 +1,5 @@
 import time
+
 from .utils import strf_time
 
 def timer_start(label:str = "") -> dict:

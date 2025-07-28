@@ -1,6 +1,8 @@
 import numpy as np
 from sentence_transformers import SentenceTransformer, CrossEncoder # SBERT 
 
+from .timing import timer_start, timer_end
+
 # Embedding (Bi-encoder)
 def get_embedding_model(verbose = True): 
     try:
@@ -40,3 +42,15 @@ def cross_similarity(query:str, documents:list[str], inverse=False, reranker=Non
     
     return similarity 
 
+
+def semantic_line_filter(query : str, text : str, delim="\n", min_similarity = -0.99, reranker=None, verbose=True):
+    if reranker == None: reranker = get_reranker_model()
+    if verbose: t = timer_start("filtering lines")
+    lines = [line for line in text.split(delim) if len(line.strip()) > 3] 
+    similarity = cross_similarity(query, lines)
+    mask = similarity >= min_similarity
+    s = []
+    for i in np.where(mask)[0]:
+        s.append(lines[i])
+    if verbose: timer_end(t)
+    return delim.join(s)     
