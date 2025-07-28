@@ -1,6 +1,14 @@
 # GeoRAG
 
-Geographical Retrieval Augmented Generation
+Geographical Retrieval Augmented Generation (GeoRAG) is an AI-powered search assistant that helps users find and recommend places such as restaurants, cafes, attractions, and shopping centers in a given city. GeoRAG combines semantic search using S-BERT embeddings, fast vector similarity search with Milvus, and natural language response generation using the Mistral 7B language model running in the cloud.
+
+GeoRAG works by first retrieving relevant information from OpenStreetMap data, encoding place descriptions into vector embeddings, and storing them in a Milvus vector database. When a user asks a question, the system finds the most relevant places using semantic similarity, then generates a helpful, context-aware answer using the Mistral LLM.
+
+GeoRAG software features:
+- **Semantic Search:** Uses light-weight Sentence Transformers (S-BERT) to encode place descriptions and user queries for accurate matching.
+- **Vector Database:** Stores and searches embeddings efficiently using Milvus.
+- **LLM Integration:** Generates natural language answers with Mistral 7B, grounded in retrieved context.
+- **Command-Line Interface:** Easy-to-use CLI for both interactive and parametric modes.
 
 ### Overview
 1. Follow the [Installation instruction](#install) to setup the software. 
@@ -11,6 +19,12 @@ Geographical Retrieval Augmented Generation
 
 Command line interface (CLI) purely runs in terminal. Pretty interface nevertheless. 
 
+#### Mistral AI
+Have your Mistral API key ready when using the program for the first time. 
+Note that you can [sign up](https://auth.mistral.ai/ui/registration) for a free trial. Then you can [create a new key] (https://help.mistral.ai/en/articles/347464-how-do-i-create-api-keys-within-a-workspace).
+
+Once you have entered it it will be stored under `.api_keys/mistralai.txt` so that you won't be asked again.
+
 #### <a name="interactive"></a> Interactive Mode
 
 Interactive mode. Input parameters at runtime.
@@ -20,10 +34,21 @@ Here is a "screenshot" of what the interface looks like.
 ```md
 ────────── GeoRAG ────────────────────────────────────────
 Interactive interface
+
 Place "Karlsruhe"
-Located place  Karlsruhe, Baden-Württemberg, Deutschland
+> Located place  Karlsruhe, Baden-Württemberg, Deutschland
+
 Query "Best vegan restaurant"
-...
+[ ... ]
+
+--- Answer: -----------
+These restaurants are highly rated for their vegan options 
+1. My heart beats vegan
+2. The Corner 
+------------------------------
+
+Finished GeoRAG pipeline in 9.8s 
+Continue? [Y/n]  ... 
 ```
 
 #### <a name="parametric"></a> Parametric Mode
