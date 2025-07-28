@@ -5,20 +5,39 @@ import osmnx
 from typing import Union
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+from collections import namedtuple
 
+from .utils import alphanumeric
 from .file_system import get_data_path
 from .constants.amenity import AmenityByCategory
 from .timing import timer_start, timer_end
 
 def geolocate(place_name, user_agent="geo_checker"):
     """ Geograohically locate a place using Nominatim.
-    Caveat needs internet connection to run.
+    Needs internet connection to run if the place has not been downloaded yet.
     Args:
         place_name (str): The name of the place to geolocate.
         user_agent (str): User agent for Nominatim requests.
     Returns:
         Location object or None if geocoding fails.
     """
+    try:
+        place = place_name.split(",")[0]
+        place = alphanumeric(place).split("_")[0]
+        proj_path = os.path.dirname(os.path.dirname(__file__))
+        data_path = os.path.join(proj_path, "data")
+        for f in os.listdir(data_path):
+            f_path = os.path.join(data_path, f) 
+            if os.path.isdir(f_path):
+                if f.split("_")[0] == place:
+                    vecdb_path = os.path.join(data_path, f, "vectors.npz")
+                    if os.path.isfile(vecdb_path):
+                        print("Found place in files @", f)
+                        nt = namedtuple('LocalLocator', ['address'])
+                        return nt(f.replace("_", ", "))
+    except Exception as e: pass
+    
+
     geolocator = Nominatim(user_agent=user_agent)
     try:
         location = geolocator.geocode(place_name, timeout=5)

@@ -1,9 +1,9 @@
-try:
-    from .geo import geolocate, geoquery
-    from .vectordb import build_database
-    from .search import semantic_search as search
-    from .cli import interface as cli_interface
-    #from .vectordb import build_vectordb
+try: 
+    # Only these components are exported:
+    from .cli import interface  
+    from .search import save_query as search  
+        # will use the semantic search and llm if no arguments are provided
+
 except ModuleNotFoundError as e:
     print("Modules not found:", flush=True)
     print("\t", e)

@@ -3,15 +3,25 @@ from sentence_transformers import SentenceTransformer, CrossEncoder # SBERT
 
 # Embedding (Bi-encoder)
 def get_embedding_model(verbose = True): 
-    model_name = "all-MiniLM-L6-v1" # v2 model caused memory leaks
-    embedding = SentenceTransformer(model_name)
-    return embedding
+    try:
+        model_name = "all-MiniLM-L6-v1" # v2 model caused memory leaks
+        embedding = SentenceTransformer(model_name)
+        return embedding
+    except Exception as e:
+        if verbose: 
+            print("Could not load embedding.")
+            print(e); exit(1)
 
 # Reranker (Cross-encoder)
 def get_reranker_model(verbose = True):
-    model_name = "cross-encoder/msmarco-MiniLM-L6-en-de-v1" 
-    reranker = CrossEncoder(model_name)
-    return reranker
+    try:
+        model_name = "cross-encoder/msmarco-MiniLM-L6-en-de-v1" 
+        reranker = CrossEncoder(model_name)
+        return reranker
+    except Exception as e:
+        if verbose: 
+            print("Could not load reranker.")
+            print(e); exit(1)
 
 def cross_similarity(query:str, documents:list[str], inverse=False, reranker=None):
     """
