@@ -1,27 +1,14 @@
-import osmnx
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
-def geolocate(place_name, user_agent="geo_checker"):
-    geolocator = Nominatim(user_agent=user_agent)
-    try:
-        location = geolocator.geocode(place_name, timeout=10)
-        return location
-    except (GeocoderTimedOut, GeocoderServiceError):
-        # Handle timeout or service errors gracefully
-        return None
+import os
+from georag.pipeline import multi_pipeline
 
-def get_features(place : str, tags : dict):
-    place = place.strip()
-    location = geolocate(place)
-    if location == None:
-        print(f"{place} not geocodable.")
-        return None 
-    features = osmnx.features_from_place(place, tags)
-    return features
+example_questions = [
+    "I am looking for the best sushi restaurant in Europaplatz.",
+    "I want to buy a new washing machine and where can I go to check in the city?",
+    "Where can I bring my 2 kids to visit in Karlsruhe?",
+    "Suggest a vegan and gluten-free falafel shop that is open on saturday evening.",
+    "Which cafe has the fastest internet connection?",
+]
+place = "Karlsruhe"
 
-
-place = "Karlsruhe, Germany"
-#place = "Umbabwe, Gacio"
-tags = {"amenity" : ["restaurant"]}
-features = get_features(place, tags)
+answers = multi_pipeline(place, example_questions, verbose=True, name="example")

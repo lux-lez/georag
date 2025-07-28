@@ -4,7 +4,7 @@ Geographical Retrieval Augmented Generation
 
 ### Overview
 1. Follow the [Installation instruction](#install) to setup the software. 
-2. Jump right with the command line interface either in [interactive_mode](#interactive) or [parametric_mode](#parametric).
+2. Jump right with the command line interface either in [interactive mode](#interactive), [parametric mode](#parametric) or [running from Python](#code).
 3. Dive deeper and maybe even [contribute to the project](#contribute). 
 
 ### Usage 
@@ -13,7 +13,7 @@ Command line interface (CLI) purely runs in terminal. Pretty interface neverthel
 
 #### <a name="interactive"></a> Interactive Mode
 
-Interactive mode, requires no parameters.
+Interactive mode. Input parameters at runtime.
 ```python3 georag.py```
 
 Here is a "screenshot" of what the interface looks like.
@@ -40,6 +40,23 @@ positional arguments:
 options:
   -h, --help  show this help message and exit
 ```
+
+### <a name="code"></a> Code interface
+If you want to use the code in your python 
+
+```python
+from georag import pipeline as rag
+
+# Single query
+answer = rag("Karlsruhe", "Best vegan restaurant")
+
+# Multiple queries
+diets = ["vegan", "gluten-free", "halal"]
+queries = [f"Find restaurants with {d} food." for d in diets]
+answer_batch = rag("Karlsruhe", queries )
+
+```
+When running the LLM in the cloud the bottleneck is the loading of the vector database, so keeping it open between queries improves performance. 
 
 ### <a name="install"></a> Installation 
 

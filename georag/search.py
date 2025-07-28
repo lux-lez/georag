@@ -87,6 +87,9 @@ def semantic_search(place : str, query : str, limit=30, client = None, verbose=T
     #    df[i, "text"] = semantic_line_filter(query, df["text"][i], reranker=reranker, verbose=verbose)
     
     results = results.iloc[df["corpus_id"]]
-    results["similarity"] = 1.0 / (1.0 + np.exp(-df["score"])) * 2.0 - 1.0
+    similarity = 1.0 / (1.0 + np.exp(-df["score"])) * 2.0 - 1.0
+    mask = similarity != similarity 
+    similarity[mask] = - 1.0
+    results["similarity"] = similarity
     
     return results

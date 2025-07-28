@@ -70,6 +70,7 @@ def geoquery(place : str, verbose=True) -> tuple[pd.DataFrame, list[str]]:
         return None 
     if verbose: print(f"Geo feature query for {place}")
     tags = {"amenity" : amenities}
+
     features = osmnx.features_from_place(place, tags)
     features = features[ features.name == features.name ] # filter out NaN names
     n = features.shape[0]
@@ -87,6 +88,10 @@ def geoquery(place : str, verbose=True) -> tuple[pd.DataFrame, list[str]]:
     path = get_data_path(place)
     with open(os.path.join(path, "geo_columns.csv"), "w") as f:
         f.write(", ".join(columns))
+    all_amenities = list(map(str,np.unique(features.amenity)))
+    with open(os.path.join(path, "amenities.csv"), "w") as f:
+        f.write(", ".join(all_amenities))
+
 
     # Markdown version of columns, very fast to generate
     texts = []
