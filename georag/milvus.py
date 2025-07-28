@@ -17,7 +17,7 @@ def milvus_client(place : str, verbose=True) -> pymilvus.MilvusClient:
     
     Don't forget to close the client after use!
     """
-    location = geolocate(place, verbose=False)
+    location = geolocate(place)
     if location != None: place = location.address
     if place == None:  
         if verbose: print(f"Could not geolocate {place}.") 
@@ -28,13 +28,20 @@ def milvus_client(place : str, verbose=True) -> pymilvus.MilvusClient:
         return None
     
     try:
+        print("\nStarting Milvus client for", place)
         client = pymilvus.MilvusClient(db_path)
+        print("Got milvus client ", client)
         return client
     except pymilvus.MilvusError as e:
         print("Could not connect to Milvus server.")
         print(e)
+    except Exception as e:
+        print("Error in database ")
+        print(e)
     if client == None: 
         print("Milvus client could not connect.")
+    else:
+        client.close() # Close connection if it still exists to avoid memory leak.
 
 def milvus_init(client : pymilvus.MilvusClient, place : str, n_latent : int, overwrite = False, verbose=True):
     """
@@ -97,13 +104,11 @@ def milvus_populate(client : pymilvus.MilvusClient, data: pd.DataFrame, verbose=
     # Insert data
     data_iterator = range(len(data))
     if verbose: data_iterator = tqdm(data_iterator, desc="Inserting")
-    
     for i in data_iterator:
-        row = data.iloc[i]
+        row = dict(data.iloc[i])
         client.insert(
             collection_name=collection_name,
-            data=[row["name"], row["amenity"], row["description"], row["vector"]],
-            ids=[i]
+            data={"id" : i, "name" : row["name"], "amenity" : row["amenity"], "text" : row["description"], "vector" : row["vector"]}
         )
 
     if verbose: timer_end(t)

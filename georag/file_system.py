@@ -1,4 +1,5 @@
 import os 
+import time, datetime 
 from .utils import alphanumeric 
 
 # Data paths
@@ -12,3 +13,4 @@ def vectordb_exists(place : str):
     vec_filename = "vector.db"
     vec_path = os.path.join(path, vec_filename)
     return os.path.isdir(vec_path)
+

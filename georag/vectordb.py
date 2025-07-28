@@ -28,7 +28,7 @@ def load_vectors(place : str, verbose = True) -> Union[pd.DataFrame, None]:
     if not os.path.isfile(data_path): return None
     else:
         if verbose: t = timer_start("loading compressed vector data (.npz)")
-        data = np.load(data_path)
+        data = np.load(data_path, allow_pickle=True)
         data = {k: data[k] for k in ["name", "amenity", "description", "vector"]}  # Convert to dictionary
         n = len(data["name"])
         if verbose: 
@@ -60,10 +60,25 @@ def encode_vectors(texts : list[str], embedding = None, verbose=True) -> list[np
 
 def build_database(place : str, overwrite : bool = False, verbose=True):
 
-    # Load existing vector database if available
-    data = load_vectors(place, verbose=verbose)
-    if data == None:
-        data = geo_search(place, verbose=verbose)
+    
+    # Milvus client
+    client = milvus_client(place, verbose=verbose)
+
+    if client == None:
+        print("Could not connect to Milvus client. Please check your setup.")
+        connections = pymilvus.connections.list_connections()
+        if len(connections) > 0:
+            print("Open Connections:")
+            for c in connections:
+                print("  Connection ", c[0], " : ", c[1])
+        return 
+
+    else:
+        if client.has_collection("semantic"): return client
+
+        # Load existing vector database if available
+        data = load_vectors(place, verbose=verbose)
+        if data == None: data = geoquery(place)
         vectors = encode_vectors(data["description"], verbose=verbose)
         data["vector"] = vectors
 
@@ -71,6 +86,7 @@ def build_database(place : str, overwrite : bool = False, verbose=True):
         if verbose: t = timer_start("saving compressed semantic vectors (.npz)")
         path = get_data_path(place)
         data_path = os.path.join(path, "vectors.npz") 
+        os.makedirs(path, exist_ok=True)
         np.savez(data_path, **data)
         if verbose: timer_end(t)
         
@@ -78,25 +94,21 @@ def build_database(place : str, overwrite : bool = False, verbose=True):
         if verbose: 
             n = len(data["name"]) ; m = len(np.unique(data["amenity"]))
             print("Found existing vector data with", n, "entries from", m, "amenities")
-    
-    # Milvus client
-    client = milvus_client(place, verbose=verbose)
-    if client == None:
-        raise ValueError("Could not connect to Milvus client. Please check your setup.")
-    
-    # Copy data to Milvus 
-    n_latent = len(data["vector"][0]) 
-    milvus_init(client, place, n_latent, overwrite=overwrite, verbose=verbose)
-    milvus_populate(client, pd.DataFrame(data), verbose=verbose)
-    
-    # Print collection stats
-    if verbose:
-        collection_name = "semantic"
-        print("Collection", collection_name)
-        stats = client.get_collection_stats(collection_name)
-        print("\n".join([ "   " +  str(k) + " : " + str(v) for k,v in stats.items() ]))
 
-    # Close the connection
-    client.close()
+
+        # Copy data to Milvus 
+        n_latent = len(data["vector"][0]) 
+        milvus_init(client, place, n_latent, overwrite=overwrite, verbose=verbose)
+        milvus_populate(client, pd.DataFrame(data), verbose=verbose)
+        
+        # Print collection stats
+        if verbose:
+            collection_name = "semantic"
+            print("Collection", collection_name)
+            stats = client.get_collection_stats(collection_name)
+            print("\n".join([ "   " +  str(k) + " : " + str(v) for k,v in stats.items() ]))
+
+        # Close the connection
+        client.close()
         
 

@@ -12,6 +12,7 @@ from .timing import timer_start, timer_end
 
 def geolocate(place_name, user_agent="geo_checker"):
     """ Geograohically locate a place using Nominatim.
+    Caveat needs internet connection to run.
     Args:
         place_name (str): The name of the place to geolocate.
         user_agent (str): User agent for Nominatim requests.
@@ -20,10 +21,11 @@ def geolocate(place_name, user_agent="geo_checker"):
     """
     geolocator = Nominatim(user_agent=user_agent)
     try:
-        location = geolocator.geocode(place_name, timeout=10)
+        location = geolocator.geocode(place_name, timeout=5)
         return location
-    except (GeocoderTimedOut, GeocoderServiceError):
-        # Handle timeout or service errors gracefully
+    except (GeocoderTimedOut, GeocoderServiceError) as e:
+        print("Geolocate error:")
+        print(e)
         return None
 
 def geoquery(place : str, verbose=True) -> pd.DataFrame:
@@ -42,7 +44,7 @@ def geoquery(place : str, verbose=True) -> pd.DataFrame:
         t = timer_start("geo feature query")
     
     # Geolocate the place
-    location = geolocate(place, verbose=False)
+    location = geolocate(place)
     if location != None: place = location.address
     if place == None:
         if verbose: print(f"{place} not geolocatable.")

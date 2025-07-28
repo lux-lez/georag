@@ -12,6 +12,7 @@ __pycache__
 cache/*
 data/*
 storage/*
+queries/*
 
 # output from tests
 tests/logs/*
