@@ -25,6 +25,8 @@ Note that you can [sign up](https://auth.mistral.ai/ui/registration) for a free 
 
 Once you have entered it it will be stored under `.api_keys/mistralai.txt` so that you won't be asked again.
 
+Note that additionally to printing the answer on the screen the results of each pipeline step are including the whole context are written to `requests/query_XYZ.md` where XYZ is the timestamp when the pipeline finished.
+
 #### <a name="interactive"></a> Interactive Mode
 
 Interactive mode. Input parameters at runtime.
@@ -74,14 +76,20 @@ from georag import pipeline as rag
 
 # Single query
 answer = rag("Karlsruhe", "Best vegan restaurant")
+```
+Note that everytime you run this function the whole database has to be reloaded which takes much longer than a single query.
+For multiple queries it is better to use the following functionality.
+
+```python
+from georag import multi_pipeline as batch_rag
 
 # Multiple queries
 diets = ["vegan", "gluten-free", "halal"]
 queries = [f"Find restaurants with {d} food." for d in diets]
-answer_batch = rag("Karlsruhe", queries )
-
+answer_batch = batch_rag("Karlsruhe", queries )
 ```
-When running the LLM in the cloud the bottleneck is the loading of the vector database, so keeping it open between queries improves performance. 
+
+(Note that you can also pass an optional parameter `name : str` to the pipeline functions which will save the log file with a proper name instead of some timestamp.)
 
 ### <a name="install"></a> Installation 
 
