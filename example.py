@@ -8,6 +8,7 @@ example_questions = [
     "Where can I bring my 2 kids to visit in Karlsruhe?",
     "Suggest a vegan and gluten-free falafel shop that is open on saturday evening.",
     "Which cafe has the fastest internet connection?",
+    "Give me some italian restaurants that are open on sundays"
 ]
 place = "Karlsruhe"
 

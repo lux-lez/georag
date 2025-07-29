@@ -72,11 +72,13 @@ def semantic_search(place : str, query : str, limit=30, client = None, verbose=T
     Perform semantic search
     """
 
+    # Load milvus client if not given and perform ANN search
     if client == None: _client = milvus_client(place)
     else: _client = client
     results = ann_search(place, query, limit, _client)
     if client == None: _client.close()
     
+    # Reorder the results
     reranker = get_reranker_model()
     if verbose: t = timer_start("reranking")
     texts = reranker.rank(query, results["text"], top_k=10, return_documents=True)
@@ -86,10 +88,13 @@ def semantic_search(place : str, query : str, limit=30, client = None, verbose=T
     #for i in range(df.shape[0]):
     #    df[i, "text"] = semantic_line_filter(query, df["text"][i], reranker=reranker, verbose=verbose)
     
-    results = results.iloc[df["corpus_id"]]
-    similarity = 1.0 / (1.0 + np.exp(-df["score"])) * 2.0 - 1.0
-    mask = similarity != similarity 
-    similarity[mask] = - 1.0
-    results["similarity"] = similarity
+    # Calculate similarity scores
+    corpus_id = np.asarray(df["corpus_id"], dtype=int)
+    scores = np.asarray(df["score"])
+    similarity = 1.0 / (1.0 + np.exp(-scores)) 
+    similarity = similarity* 2.0 - 1.0
     
+    # Filter results and add similarity
+    results = results.iloc[corpus_id]
+    results["similarity"] = similarity
     return results

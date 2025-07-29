@@ -1,18 +1,85 @@
-# Explanation of amenities:
-#   https://wiki.openstreetmap.org/wiki/Key:amenity
+# For more information on amenities see
+# https://wiki.openstreetmap.org/wiki/Key:amenity
+# https://taginfo.openstreetmap.org/keys/amenity#values
 AmenityByCategory = {
     "gastronomy": [
-        "restaurant", "cafe", "bar", "pub", "fast_food", "food_court", "biergarten","ice_cream", "bakery"
+        "restaurant", 
+        "cafe", 
+        "bar", 
+        "pub", 
+        "fast_food", 
+        "food_court", 
+        "biergarten",
+        "ice_cream", 
+        "bakery"
     ],
     "shopping" : [
-        "supermarket", "mall", "department_store", "convenience", "kiosk", "shopping", "shops", "marketplace",
+        "supermarket", 
+        "mall", 
+        "department_store", 
+        "convenience", 
+        "kiosk", 
+        "shopping", 
+        "shops", 
+        "marketplace",
+        "hardware",
+        "hardware_store",
+        "pharmacy",
+        "convenience_store",
+        "grocery",
+        "grocery_store"
     ],
-    "attractions" : [
-        "cinema", "theatre", "planetarium", "public_bookcase", "studio",
-        "arts_centre", "library", "museum", "exhibition_centre", "events_venue",
-        "park", "playground", "lounge", "public_bath", "bbq", "bench", "shelter",
-        "swimming_pool", "sports_centre", "stadium", "fitness_centre", "dance", "sauna",
-        "spa", "ice_rink", "miniature_golf", "bowling_alley", "amusement_arcade", "community_centre",
+    "entertainment" : [
+        "theatre", 
+        "cinema", 
+        "planetarium", 
+        "public_bookcase", 
+        "studio",
+        "arts_centre", 
+        "library", 
+        "museum", 
+        "exhibition_centre", 
+        "events_venue",
+        "park", 
+        "playground", 
+        "lounge", 
+        "public_bath", 
+        "swimming_pool", 
+        "sports_centre", 
+        "stadium", 
+        "fitness_centre", 
+        "dance", 
+        "sauna",
+        "spa", 
+        "ice_rink", 
+        "miniature_golf", 
+        "bowling_alley", 
+        "amusement_arcade", 
+        "community_centre",
+        "conference_centre",
+        "arts_centre",
+        "planetarium",
+        "internet_cafe",
+        "surf_school",
+        "toy_library"
+    ],
+    "education": [
+        "child_care",
+        "college",
+        "dancing_school",
+        "driving_school",
+        "first_aid_school",
+        "kindergarten",
+        "language_school",
+        "library",
+        "toy_library",
+        "research_institute",
+        "training",
+        "music_school",
+        "school",
+        "traffic_park",
+        "university",
+        "dojo"
     ]
 }
 

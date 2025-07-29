@@ -34,16 +34,23 @@ def cross_similarity(query:str, documents:list[str], inverse=False, reranker=Non
     if inverse: pairs = [[doc, query] for doc in documents]
     else:       pairs = [[query, doc] for doc in documents]    
     scores = reranker.predict(pairs)
+    print("Number of NaN values in prediction ", np.sum( scores != scores ))
     prob = 1.0 / ( 1.0 + np.exp(-scores) ) 
+    mask = prob != prob # Null values, happens if score is strongly negative then 1.0 / infty = nan
+    prob[mask] = 0.0
     similarity = 2.0 * prob - 1.0 # affine transform                    
                                   #   0% : probability <->  similarity -1.0 )
                                   #  50% : probability <->  similarity  0.0 )    
                                   # 100% : probability <->  similarity +1.0 )
     
+    similarity[mask] = -1.0 
     return similarity 
 
 
 def semantic_line_filter(query : str, text : str, delim="\n", min_similarity = -0.99, reranker=None, verbose=True):
+    """
+    Remove all lines from string that are not similar enough to query.
+    """
     if reranker == None: reranker = get_reranker_model()
     if verbose: t = timer_start("filtering lines")
     lines = [line for line in text.split(delim) if len(line.strip()) > 3] 
