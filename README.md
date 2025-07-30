@@ -1,6 +1,6 @@
 # GeoRAG  
 
-[Read the official documentation here.](./docs/Documentation.md)
+[Read the documentation here.](./docs/Documentation.md)
 
 --- 
 
@@ -30,4 +30,3 @@ This software is released under GPLv3 licence.
 - Still a lot of warnings are printed but seems to work anyway
 
 - Only tested for Germany 
-

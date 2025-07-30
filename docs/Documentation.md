@@ -12,25 +12,55 @@ GeoRAG software features:
 
 ### Overview
 1. Follow the [Installation instruction](#install) to setup the software. 
-2. Jump right with the command line interface either in [interactive mode](#interactive), [parametric mode](#parametric) or [running from Python](#code).
-3. Dive deeper and maybe even [contribute to the project](#contribute). 
+2. Get your [Mistral API key](#mistral)
+3. Run [a single example](#example) or run [the set of examples](#allexamples) 
+4. Discover the different usage modes 
+  - [interactive mode](#interactive)
+  - [parametric mode](#parametric)
+  - [running from Python](#code).
 
-### Usage 
+### <a name="install"></a> Installation 
 
-Command line interface (CLI) purely runs in terminal. Pretty interface nevertheless. 
+1. First create a virtual environment and activate it. (Optional, but strongly recommended)
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+On Windows you have to call `.venv/bin/activate.bat` to [activate the virtual environment](https://docs.python.org/3/library/venv.html#how-venvs-work) instead of calling the source function.
 
-#### Mistral AI
+2. Install the Python requirements
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+Caveat; If you don't have a GPU that supports CUDA then run
+```bash
+pip cache purge
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+```
+
+to clear the CUDA files and reinstall the CPU version of torch. Retry the installation steps from above afterwards.
+
+
+#### <a name="mistral"></a> Mistral AI
 Have your Mistral API key ready when using the program for the first time. 
-Note that you can [sign up](https://auth.mistral.ai/ui/registration) for a free trial. Then you can [create a new key] (https://help.mistral.ai/en/articles/347464-how-do-i-create-api-keys-within-a-workspace).
+Note that you can [sign up](https://auth.mistral.ai/ui/registration) for a free trial. Then you can [create a new key](https://help.mistral.ai/en/articles/347464-how-do-i-create-api-keys-within-a-workspace) which you will have to copy.
 
 Once you have entered it it will be stored under `.api_keys/mistralai.txt` so that you won't be asked again.
 
-Note that additionally to printing the answer on the screen the results of each pipeline step are including the whole context are written to `requests/query_XYZ.md` where XYZ is the timestamp when the pipeline finished.
+### Usage 
+
+Use the command line interface (CLI) of the Python module. That means you call `python3 -m georag ...` with some arguments.
+
+Note that additionally to printing the answer on the screen the results of each pipeline step are including the whole context are written to a markdown file when the pipeline finished. The file is stored in `requests/query_XYZ.md` where XYZ is the name of the query (or the timestamp if no name was provided) .
+
 
 #### <a name="interactive"></a> Interactive Mode
 
-Interactive mode. Input parameters at runtime.
-```python3 georag.py```
+The interactive mode lets you input parameters at runtime. To run it call the module without arguments
+```
+python3 -m georag.py
+```
 
 Here is a "screenshot" of what the interface looks like.
 ```md
@@ -54,22 +84,30 @@ Continue? [Y/n]  ...
 ```
 
 #### <a name="parametric"></a> Parametric Mode
-Give the two parameters for place and query.  
-```md
-usage: python3 -m georag [-h] place query
 
-GeoRAG is geographically knowledgable AI search assistent.
+The interactive mode lets you specify the two parameters for place and query from the terminal. 
 
-positional arguments:
-  place       where to search
-  query       what to search for
+Usage:
+```
+ python3 -m georag <place> <query>
+```
+Positional arguments:
+  - place:  where to search
+  - query:  what to search for
 
-options:
-  -h, --help  show this help message and exit
+
+You can view this help by calling
+```sh
+python3 -m georag --help
+```
+
+<a name="example"><b>Example 1</b></a> Here is an example for a single query
+```sh
+python3 -m georag "Karlsruhe" "Best vegan restaurant"
 ```
 
 ### <a name="code"></a> Code interface
-If you want to use the code in your python 
+If you want to use the code in your python simply import the following function
 
 ```python
 from georag import pipeline as rag
@@ -91,24 +129,7 @@ answer_batch = batch_rag("Karlsruhe", queries )
 
 (Note that you can also pass an optional parameter `name : str` to the pipeline functions which will save the log file with a proper name instead of some timestamp.)
 
-### <a name="install"></a> Installation 
-
-1. First create a virtual environment and activate it. (Optional, but strongly recommended)
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
+<a name="allexamples"><b>Example 2</b></a> Here is an example for running multiple queries
+```sh
+python3 example.py
 ```
-On Windows you have to call `.venv/bin/activate.bat` to [activate the virtual environment](https://docs.python.org/3/library/venv.html#how-venvs-work) instead of calling the source function.
-
-2. Install the Python requirements
-```bash
-python3 -m pip install -r requirements.txt
-```
-
-Caveat; If you don't have a GPU that supports CUDA then run
-```bash
-pip cache purge
-pip install torch --index-url https://download.pytorch.org/whl/cpu
-```
-
-to clear the CUDA files and reinstall the CPU version of torch. Retry the installation steps from above afterwards.
